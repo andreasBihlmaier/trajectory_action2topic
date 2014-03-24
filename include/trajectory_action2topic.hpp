@@ -46,6 +46,9 @@ class TrajectoryAction2Topic
     std::string m_actionName;
     actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> m_actionServer;
 
+    control_msgs::FollowJointTrajectoryFeedback m_feedback;
+    control_msgs::FollowJointTrajectoryResult m_result;
+
 
   private:
     // methods

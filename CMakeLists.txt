@@ -113,8 +113,12 @@ add_executable(trajectory_action2topic_node src/main.cpp)
 # add_dependencies(trajectory_action2topic_node trajectory_action2topic_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(trajectory_action2topic_node
+target_link_libraries(trajectory_action2topic
   ${catkin_LIBRARIES}
+  trajectory_action2topic
+)
+
+target_link_libraries(trajectory_action2topic_node
   trajectory_action2topic
 )
 
