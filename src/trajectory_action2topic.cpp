@@ -3,6 +3,7 @@
 // system includes
 
 // library includes
+#include <ahbstring.h>
 
 // custom includes
 
@@ -30,7 +31,7 @@ TrajectoryAction2Topic::permutationMap(const std::vector<std::string>& targetOrd
     if (foundIt == targetOrder.end()) {
       return JointMapType();
     }
-    jointMap[nameIdx] = foundIt - targetOrder.begin();
+    jointMap[foundIt - targetOrder.begin()] = nameIdx;
   }
 
   return jointMap;
@@ -67,6 +68,7 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
       m_actionServer.setSucceeded(m_result);
       return;
     }
+    ROS_INFO_STREAM("m_currJointState.name: " << ahb::string::toString(m_currJointState.name) << " goal->trajectory.joint_names: " << ahb::string::toString(goal->trajectory.joint_names) << " jointMap: " << ahb::string::toString(jointMap));
   } else {
     for (size_t jointIdx = 0; jointIdx < goal->trajectory.points[0].positions.size(); jointIdx++) {
       jointMap[jointIdx] = jointIdx;
