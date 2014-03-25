@@ -96,15 +96,15 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
     m_jointPub.publish(m_targetJointState);
 
     // wait until the time at which the point should be reached
-    ros::Duration sinceStart = startTime - ros::Time::now();
+    ros::Duration sinceStart = ros::Time::now() - startTime;
     ros::Duration sleepDuration = currPoint.time_from_start - sinceStart;
-    ROS_INFO_STREAM("Sleeping for " << sleepDuration);
+    ROS_INFO_STREAM("sinceStart=" << sinceStart << " will sleeping for " << sleepDuration);
     sleepDuration.sleep();
 
     m_feedback.desired = currPoint;
     m_feedback.actual.positions = m_currJointState.position;
     m_feedback.actual.velocities = m_currJointState.velocity;
-    sinceStart = startTime - ros::Time::now();
+    sinceStart = ros::Time::now() - startTime;
     m_feedback.actual.time_from_start = sinceStart;
     //TODO m_feedback.error
     m_actionServer.publishFeedback(m_feedback);
