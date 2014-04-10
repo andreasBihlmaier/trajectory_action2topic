@@ -1,6 +1,7 @@
 #include "trajectory_action2topic.hpp"
 
 // system includes
+#include <numeric>
 
 // library includes
 #include <ahbstring.h>
@@ -110,15 +111,24 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
     m_feedback.actual.velocities = m_currJointState.velocity;
     sinceStart = ros::Time::now() - startTime;
     m_feedback.actual.time_from_start = sinceStart;
-    //TODO m_feedback.error
+    m_feedback.error.positions = m_targetJointState.position - m_feedback.actual.positions;
+    m_feedback.error.velocities = m_targetJointState.velocity - m_feedback.actual.velocities;
     m_actionServer.publishFeedback(m_feedback);
 
-    //TODO PATH_TOLERANCE_VIOLATED
+    double position_error = std::accumulate(m_feedback.error.positions.begin(), m_feedback.error.positions.end(), 0.0, plusabs<double>);
+    if (position_error > m_max_position_error) {
+      ROS_ERROR_STREAM("Too high position error: " << ahb::string::toString(m_feedback.error.positions));
+      m_result.error_code = m_result.PATH_TOLERANCE_VIOLATED;
+      m_actionServer.setAborted(m_result);
+      success = false;
+      break;
+    }
   }
 
+  //TODO GOAL_TOLERANCE_VIOLATED
+
   if (success) {
-    //TODO GOAL_TOLERANCE_VIOLATED
-    m_result.error_code = control_msgs::FollowJointTrajectoryResult::SUCCESSFUL;
+    m_result.error_code = m_result.SUCCESSFUL;
     m_actionServer.setSucceeded(m_result);
   }
 }

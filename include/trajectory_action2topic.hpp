@@ -15,6 +15,25 @@
 // forward declarations
 
 
+template <typename T>
+std::vector<T> operator-(const std::vector<T>& lhs, const std::vector<T>& rhs)
+{
+  std::vector<T> res;
+  res.reserve(lhs.size());
+
+  for (size_t idx = 0; idx < lhs.size(); idx++) {
+    res.push_back(lhs[idx] - rhs[idx]);
+  }
+
+  return res;
+}
+
+template <typename T>
+T plusabs(const T& lhs, const T& rhs)
+{
+  return std::abs(lhs) + std::abs(rhs);
+}
+
 
 class TrajectoryAction2Topic
 {
@@ -41,6 +60,7 @@ class TrajectoryAction2Topic
     void onJoint(const sensor_msgs::JointState::ConstPtr& joints);
 
     // variables
+    static const double m_max_position_error = 0.1;
 
 
   protected:
