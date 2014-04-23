@@ -115,8 +115,15 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
     m_feedback.error.velocities = m_targetJointState.velocity - m_feedback.actual.velocities;
     m_actionServer.publishFeedback(m_feedback);
 
-    double position_error = std::accumulate(m_feedback.error.positions.begin(), m_feedback.error.positions.end(), 0.0, plusabs<double>);
-    if (position_error > m_max_position_error) {
+    //double accumulated_position_error = std::accumulate(m_feedback.error.positions.begin(), m_feedback.error.positions.end(), 0.0, plusabs<double>);
+    bool limit_exceeded = false;
+    for (size_t jointIdx = 0; jointIdx < m_feedback.error.positions.size(); jointIdx++) { // replace by std::any_of once C++11 is available ...
+      if (m_feedback.error.positions[jointIdx] > m_max_position_error) {
+        limit_exceeded = true;
+        break;
+      }
+    }
+    if (limit_exceeded) {
       ROS_ERROR_STREAM("Too high position error: " << ahb::string::toString(m_feedback.error.positions));
       m_result.error_code = m_result.PATH_TOLERANCE_VIOLATED;
       m_actionServer.setAborted(m_result);
