@@ -5,6 +5,7 @@
 
 // library includes
 #include <ahbstring.h>
+#include <urdf/model.h>
 
 // custom includes
 
@@ -40,7 +41,8 @@ TrajectoryAction2Topic::permutationMap(const std::vector<std::string>& targetOrd
 
 TrajectoryAction2Topic::TrajectoryAction2Topic(const std::string& actionName)
   :m_actionName(actionName),
-   m_actionServer(m_nh, actionName, boost::bind(&TrajectoryAction2Topic::onGoal, this, _1), false)
+   m_actionServer(m_nh, actionName, boost::bind(&TrajectoryAction2Topic::onGoal, this, _1), false),
+   m_rename_joints(false)
 {
   m_jointPub = m_nh.advertise<sensor_msgs::JointState>("set_joint", 1);
   m_jointSub = m_nh.subscribe<sensor_msgs::JointState>("get_joint", 1, boost::bind(&TrajectoryAction2Topic::onJoint, this, _1));
@@ -63,7 +65,11 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
   // sort joints according to m_currJointState
   JointMapType jointMap;
   if (!m_currJointState.name.empty()) {
-    jointMap = permutationMap(m_currJointState.name, goal->trajectory.joint_names);
+    if (m_rename_joints) {
+      jointMap = permutationMap(m_renamed_curr_joints, goal->trajectory.joint_names);
+    } else {
+      jointMap = permutationMap(m_currJointState.name, goal->trajectory.joint_names);
+    }
     if (jointMap.size() != m_currJointState.name.size()) {
       m_result.error_code = control_msgs::FollowJointTrajectoryResult::INVALID_JOINTS;
       m_actionServer.setSucceeded(m_result);
@@ -138,6 +144,42 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
     m_result.error_code = m_result.SUCCESSFUL;
     m_actionServer.setSucceeded(m_result);
   }
+}
+
+void
+TrajectoryAction2Topic::rename_joints(const std::string& robot_name, const std::string& robot_description)
+{
+  //std::cout << robot_description << std::endl;
+  urdf::Model model;
+  if (!model.initString(robot_description)) {
+    ROS_ERROR("Failed to parse robot_description URDF. Aborting.");
+    return;
+  }
+
+  ROS_INFO("Waiting to receive joint message");
+  sensor_msgs::JointStateConstPtr joint_msg = ros::topic::waitForMessage<sensor_msgs::JointState>("get_joint", m_nh);
+
+  // TODO see joint_topic_merger.py:get_target_joint_names()
+  for (std::vector<std::string>::const_iterator origIter = joint_msg->name.begin(); origIter != joint_msg->name.end(); ++origIter) {
+    //std::cout << *origIter << std::endl;
+    std::string fullOrigName = robot_name + "__" + *origIter;
+    std::vector<std::string> targetNames;
+    for (std::map<std::string, boost::shared_ptr<urdf::Joint> >::iterator jointIter = model.joints_.begin(); jointIter != model.joints_.end(); ++jointIter) {
+      //std::cout << jointIter->first << std::endl;
+      if (ahb::string::endswith(jointIter->first, fullOrigName)) {
+        targetNames.push_back(jointIter->first);
+      }
+    }
+    if (targetNames.size() != 1) {
+      ROS_ERROR("Unable to rename joint %s. Aborting.", fullOrigName.c_str());
+      return;
+    }
+
+    m_renamed_curr_joints.push_back(targetNames[0]);
+  }
+  ROS_INFO_STREAM("renamed joints: " << ahb::string::toString(m_renamed_curr_joints));
+
+  m_rename_joints = true;
 }
 /*------------------------------------------------------------------------}}}-*/
 

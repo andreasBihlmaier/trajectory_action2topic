@@ -58,6 +58,7 @@ class TrajectoryAction2Topic
     // methods
     void onGoal(const control_msgs::FollowJointTrajectoryGoalConstPtr& goal);
     void onJoint(const sensor_msgs::JointState::ConstPtr& joints);
+    void rename_joints(const std::string& robot_name, const std::string& robot_description);
 
     // variables
     static const double m_max_position_error = 0.1;
@@ -72,6 +73,8 @@ class TrajectoryAction2Topic
     actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> m_actionServer;
     ros::Subscriber m_jointSub;
     ros::Publisher m_jointPub;
+    bool m_rename_joints;
+    std::vector<std::string> m_renamed_curr_joints;
 
     control_msgs::FollowJointTrajectoryFeedback m_feedback;
     control_msgs::FollowJointTrajectoryResult m_result;

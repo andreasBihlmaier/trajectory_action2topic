@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   control_msgs
   ahbstring
+  urdf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -116,10 +117,10 @@ add_executable(trajectory_action2topic_node src/main.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(trajectory_action2topic
   ${catkin_LIBRARIES}
-  trajectory_action2topic
 )
 
 target_link_libraries(trajectory_action2topic_node
+  ${catkin_LIBRARIES}
   trajectory_action2topic
 )
 
