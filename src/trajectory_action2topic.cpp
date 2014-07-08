@@ -92,7 +92,10 @@ TrajectoryAction2Topic::onGoal(const control_msgs::FollowJointTrajectoryGoalCons
 
     m_targetJointState.header.seq++;
     m_targetJointState.position = reorderJoints(jointMap, currPoint.positions);
-    m_targetJointState.velocity = reorderJoints(jointMap, currPoint.velocities);
+    // TODO
+    // m_targetJointState.velocity = reorderJoints(jointMap, currPoint.velocities);
+    // currently only position control:
+    m_targetJointState.velocity = std::vector<double>();
 
     if (m_actionServer.isPreemptRequested()) {
       ROS_INFO("Preempted at point %zd", pointIdx);
